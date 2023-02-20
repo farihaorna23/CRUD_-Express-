@@ -13,7 +13,7 @@ router.get("/test", (req, res, next) => {
   }
 });
 
-router.get("/getPokemon", (req, res, next) => {
+router.get("/Pokemon", (req, res, next) => {
   //if the request has a query like search a pokemon by name or id ->send the client that specific pokemon
   //else send the entire list of pokemon
   const { name, num } = req.query;
@@ -59,10 +59,87 @@ router.get("/getPokemon", (req, res, next) => {
 //   }
 // });
 
-//put-> the request handler will receive a body and a
+//post -> will recieve a request body of a new pokemon and add the new pokemon to the json file
+router.post("/Pokemon", (req, res, next) => {
+  //get the parsed request body
+  const newPokemon = req.body;
+  //read the file to get the content-> make sure to decode it and parse it
+  fs.readFile(pokemonFile, (err, contents) => {
+    if (err) {
+      next(err); //server error
+    }
+    let { pokemon } = JSON.parse(contents.toString());
+    //each of the new pokemon will get their own new id and num
+    let pokemonId = pokemon[pokemon.length - 1].id + 1;
+    newPokemon.id = pokemonId;
+    newPokemon.num = String(pokemon[pokemon.length - 1].id + 1).padStart(
+      3,
+      "0"
+    );
+    //adding the newPokemon with all its detail to the original pokemon array
+    pokemon.push(newPokemon);
+    //overwrite the new array into the json file
+    fs.writeFile(pokemonFile, JSON.stringify({ pokemon }), err => {
+      if (err) {
+        next(err);
+      }
+      res.json({ msg: "Pokemon added", insertedId: pokemonId });
+    });
+  });
+});
+
+//put-> the request handler will receive a body and an id--> update the deatil of the pokemon that has the id
+
+router.put("/Pokemon", (req, res, next) => {
+  //get the body
+  const updatedDeatails = req.body;
+
+  //get the id
+  const { id } = req.query;
+  //if id not valid->send a message to the client
+  if (isNaN(parseInt(id))) {
+    res.status(404).json({ msg: "Please send a valid id." });
+  }
+
+  //write it again to the file
+  //send a response
+  try {
+    fs.readFile(pokemonFile, (err, content) => {
+      if (err) {
+        next(err);
+      }
+      //read the file and get the content
+      const { pokemon } = JSON.parse(content.toString());
+      //get the targeted pokemon and update info
+      const findPokemon = pokemon.map(pokemon => {
+        if (pokemon.id == id) {
+          //when you find the pokemon, upate it with its old and new details
+          pokemon = { ...pokemon, ...updatedDeatails };
+        }
+        //returning each pokemon of the array to the new array
+        return pokemon;
+      });
+      fs.writeFile(
+        pokemonFile,
+        JSON.stringify({ pokemon: findPokemon }),
+        err => {
+          if (err) {
+            next(err);
+          } else {
+            res.json({
+              msg: `Succesfully updated the pokemon with the id ${id}`
+            });
+          }
+        }
+      );
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 //delete -> the request handler will recieve an id and we would have to delete the pokemon
-router.delete("/removePokemon", (req, res, next) => {
+router.delete("/Pokemon", (req, res, next) => {
   //we would get the id from url
   const { id } = req.query;
   //check to see if the user actually gave valid number that can be use. If not, tell the client that their id is not valid

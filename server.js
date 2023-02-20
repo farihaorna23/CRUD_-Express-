@@ -4,6 +4,9 @@ const path = require("path");
 const router = require("./routes/index.js");
 const app = express();
 
+//parsing request body for any request method
+app.use(express.json());
+
 app.use(router);
 
 //when the doesn't exist
