@@ -13,6 +13,7 @@ router.get("/test", (req, res, next) => {
   }
 });
 
+//the get request handler
 router.get("/Pokemon", (req, res, next) => {
   //if the request has a query like search a pokemon by name or id ->send the client that specific pokemon
   //else send the entire list of pokemon
